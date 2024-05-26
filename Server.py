@@ -1,14 +1,17 @@
 import websockets
 import asyncio
+import json
+from datetime import datetime
+import os
 
 connected_clients = set()
 
-def read_last_messages():
+async def read_last_messages():
     try:
-        with open("messages.txt", 'r') as file:
-            # Read the last 5 lines of the file
-            last_lines = file.readlines()[-5:]
-        return last_lines
+        with open("messages.json", 'r') as file:
+            # Read each line and parse it as JSON
+            data = [json.loads(line.strip()) for line in file.readlines()]
+            return data
     except FileNotFoundError:
         return []
 
@@ -16,18 +19,24 @@ async def connection_handler(websocket, path):
     connected_clients.add(websocket)
     
     try:
-        last_messages = read_last_messages()
-        for message in last_messages:
-            await websocket.send(message.strip())
-        async for message in websocket:
-            # Print the received message
-            print(f"Received message: {message}")
-            with open('messages.txt', 'a') as file:  # Append mode
-                # Write the message to the file
-                file.write(message + '\n')
+        #last_messages = await read_last_messages()
+        #for message in last_messages[-5:]:
+            #message_json = json.dumps({"author": "Admin", "message": message, "timestamp": datetime.now().isoformat()})
+            #await websocket.send(message_json)
 
-            
-            await broadcast(message)
+        async for message in websocket:
+            if message.strip(): 
+                message_json = json.dumps({"author": "Admin", "message": message, "timestamp": datetime.now().isoformat()})
+                # Print the received message
+                print(f"Received message: {message}")
+
+                with open('messages.json', '') as file:  
+                    if os.path.getsize("messages.json") == 0: # Check if file is empty
+                        file.write(message_json)
+                    else:
+                        file.write(',\n'+message_json)
+
+                await broadcast(message_json)
     finally:
         # Unregister client
         connected_clients.remove(websocket)
