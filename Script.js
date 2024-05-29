@@ -1,11 +1,13 @@
 let socket;
 let json;
+let username = "BBBB";
+
 const MessageType = {
   NORMAL: 'normal',
   ERROR: 'error',
 };
 
-let ErrorMessageJson = {"author": "Server", "message": "Something went wrong, are you sure the server is up?", "timestamp": new Date().toLocaleString()}
+let ErrorMessageJson = {"author": "Client", "message": "Something went wrong, are you sure the server is up?", "timestamp": new Date().toLocaleString()}
 
 try {
   // Attempt to create a WebSocket connection
@@ -43,7 +45,7 @@ function createMessageDiv(message, status) {
   var messageDiv = document.createElement("div");
   if (status == MessageType.ERROR) {
     messageDiv.style.color = "rgb(174,0,0)";
-  }
+  }  
 
   messageDiv.textContent = `${message.author} (${message.timestamp}): ${message.message}`;
   messageDiv.style.backgroundColor = "rgb(237, 238, 201)";
@@ -61,8 +63,12 @@ function createMessageDiv(message, status) {
 function Submit() {
   var message = document.getElementById('fname').value;
   if (message != "") {
-    console.log("Message:", message);
-    socket.send(message);
+    var data = {
+      "username": username,
+      "message": message
+    };
+    console.log("Message:", data);
+    socket.send(JSON.stringify(data));
     //Clear input after send
     document.getElementById('fname').value = "";
   }
