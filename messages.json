@@ -1,47 +1,17 @@
 [
     {
-        "author": "AAA",
-        "message": "dfd",
-        "timestamp": "2024-05-29 21:07:08"
-    },
-    {
-        "author": "AAA",
-        "message": "asdfasdfasdf",
-        "timestamp": "2024-05-29 21:07:12"
-    },
-    {
-        "author": "BBBB",
-        "message": "dfdfdfd",
-        "timestamp": "2024-05-29 21:07:33"
-    },
-    {
-        "author": "AAA",
-        "message": "dfdf",
-        "timestamp": "2024-05-29 21:07:36"
-    },
-    {
-        "author": "BBBB",
+        "author": "Shoe",
         "message": "dfdfd",
-        "timestamp": "2024-05-29 21:23:59"
-    },
-    {
-        "author": "BBBB",
-        "message": "asdfasd",
-        "timestamp": "2024-05-29 21:24:05"
+        "timestamp": "2024-05-29 21:31:23"
     },
     {
         "author": "Shoe",
-        "message": "asdfasdf",
-        "timestamp": "2024-05-29 21:24:22"
+        "message": "dfdfd",
+        "timestamp": "2024-05-29 21:31:24"
     },
     {
         "author": "Shoe",
-        "message": "asdfasdfasdf",
-        "timestamp": "2024-05-29 21:24:24"
-    },
-    {
-        "author": "Shoe",
-        "message": "afafafafafa",
-        "timestamp": "2024-05-29 21:24:27"
+        "message": "dfdf",
+        "timestamp": "2024-05-29 21:31:25"
     }
 ]
