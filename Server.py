@@ -38,8 +38,9 @@ async def connection_handler(websocket, path):
             await websocket.send(message_json)
 
         async for message in websocket:
-            if message.strip():
+            if message.strip(): # If message is not blank
                 try:
+                    # Split received JSON into username and text of message
                     messagedata = json.loads(message)
                     username = messagedata.get('username', 'User')
                     text = messagedata.get('message', '')
@@ -51,17 +52,18 @@ async def connection_handler(websocket, path):
                         "timestamp": formatted_datetime
                     }
                     message_json = json.dumps(message_data)
+
+
                     # Print the received message
                     print(f"Received message: {message}")
 
                     # Save the new message
                     await save_message(message_data)
 
+                    # Send to other connected clients
                     await broadcast(message_json)
                 except json.JSONDecodeError as e:
                     print("Error decoding JSON:", e)
-            else:
-                print("Empty message received.")
     finally:
         # Unregister client
         connected_clients.remove(websocket)
