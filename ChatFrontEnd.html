@@ -8,7 +8,7 @@
             position: fixed;
             display: flex;
             justify-content: center;
-            background-color: rgb(164, 20, 20);
+            background-color: rgb(20, 164, 46);
             bottom: 1vh;
             left: 50%;
             transform: translateX(-50%);
@@ -18,7 +18,7 @@
         #displaymessages {
             display: flex;
             flex-direction:column;
-            min-height: 95vh;
+            height: 95vh;
             width: 50vw;
             left: 50%;
             transform: translateX(50%);
@@ -28,6 +28,40 @@
             padding: 10px; 
             overflow-y: auto;
             border-radius: 20px;
+            overflow-wrap: break-word;/* Ensures long words break to fit the container */
+        }
+        #fname {
+            border-radius: 50px;
+        }
+        #fname:focus {
+            border-color: #7ee966;
+            outline: none;
+            box-shadow: 0 0 5px rgba(30, 84, 128, 0.5);
+        }
+        #submitbutton {
+            background-color: #7ee966;
+        }
+
+        /* Width and height of the scrollbar */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        /* Track */
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+            border-radius: 10px;
+        }
+
+        /* Handle */
+        ::-webkit-scrollbar-thumb {
+            background: #888; 
+            border-radius: 5px;
+        }
+
+        /* Handle on hover */
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555; 
         }
     </style>
     
@@ -39,7 +73,7 @@
     <div id = "displaymessages"></div>
     <div id = "submitform">
       <input type="text" id="fname" name="fname" size = 100vh>
-      <input type="submit" value="Send" onclick = Submit()>
+      <input type="submit" id="submitbutton" value="➤" onclick = Submit()>
     </div>
     <script src = "socket.js"></script>
     <script src = "messages.js"></script>
