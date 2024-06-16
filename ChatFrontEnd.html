@@ -1,67 +1,111 @@
 <!DOCTYPE html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatroom</title>
     <style>
         body {
-            background-color: rgb(152, 201, 163);
-        }
-        #submitform {
-            position: fixed;
+            background: linear-gradient(to top, rgba(119, 91, 254, 0.6), rgba(96, 40, 233, 0.3));
+            /*background: radial-gradient(circle 50px at center, rgb(159, 140, 255), rgb(46, 24, 104));*/
             display: flex;
-            justify-content: center;
-            background-color: rgb(20, 164, 46);
-            bottom: 1vh;
-            left: 50%;
-            transform: translateX(-50%);
-            size:2vh;
-            align-items: flex-end;
+            flex-direction: column; /* Align everything on page to center */
+            align-items: center;
+            /*justify-content: center;*/
+            height: 100vh;
+            overflow:hidden;
         }
-        #displaymessages {
+        #displaymessages {      
+            /*margin-top: 2vh;*/
             display: flex;
             flex-direction:column;
-            height: 95vh;
+            height: 90vh;
             width: 50vw;
-            left: 50%;
-            transform: translateX(50%);
-            background-color: rgb(221, 231, 199);
+            background-color: rgb(255, 255, 255);
             font-size: x-large;
             box-sizing: border-box; 
-            padding: 10px; 
-            overflow-y: auto;
-            border-radius: 20px;
-            overflow-wrap: break-word;/* Ensures long words break to fit the container */
+            padding: 0.25vw; 
+            overflow-y: auto; /* Add scroll bar if too long on y-axis */
+            border-radius: 5px;
+            overflow-wrap: break-word; /* Ensures long words break to fit the container */
         }
-        #fname {
-            border-radius: 50px;
+        #submitform {
+            background-color: transparent;
+            /*background-color: rgb(255, 255, 255);*/
+            position: flex;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+             
+            bottom: 1vh;
+            width: 60vw;
+            border-radius: 5px;
+            padding-bottom: 0.25vw;
+            padding-left: 0vw;
+            padding-right: 0vw;
+            margin-top: 8px;
+            /*width: calc(48vw); /* I love eyeballing random values */
         }
-        #fname:focus {
-            border-color: #7ee966;
-            outline: none;
-            box-shadow: 0 0 5px rgba(30, 84, 128, 0.5);
-        }
-        #submitbutton {
-            background-color: #7ee966;
+        
+        #inputbox {
+            /*border-radius: 50px;*/
+            width: 38vw;
+            margin-right: 1vw;
+            background-color: rgba(96, 40, 233, 0.4);
+            border-radius: 5px;
+            border-color: transparent;
+            height: 4vh;
+            padding: 2px;
+            padding-left: 0.25vw;
+            font-size: 3vh;
+            
+            font-family: "Comic Sans MS", cursive;
+            
+            border: 0;
+            
         }
 
+        #inputbox::placeholder {
+            color: black; /* Specify the color you want */
+        }
+        #inputbox:focus {
+            border-color: rgba(96, 40, 233, 0.5);
+            outline: none;
+            box-shadow: 0 0 5px rgba(96, 40, 233, 0.5);
+        }
+        #submitbutton {
+            padding: 0;
+            display: flex;
+            background-color: rgba(96, 40, 233, 0.4);
+            width: 10vw;
+            border-radius: 5px;
+            border: none;
+            height: 5vh;
+            font-size: 4vh;
+            justify-content: center;
+            align-items: center;
+        }
+        #submitbutton:hover {
+            cursor: pointer;
+        }
+        
+        /* Cool looking scrollbar I stole from the internet */
         /* Width and height of the scrollbar */
         ::-webkit-scrollbar {
             width: 12px;
         }
-
         /* Track */
         ::-webkit-scrollbar-track {
             background: #f1f1f1; 
             border-radius: 10px;
         }
-
         /* Handle */
         ::-webkit-scrollbar-thumb {
-            background: #888; 
+            background: #741bbc8c; 
             border-radius: 5px;
         }
-
         /* Handle on hover */
         ::-webkit-scrollbar-thumb:hover {
-            background: #555; 
+            background: #741bbc5a; 
         }
     </style>
     
@@ -72,8 +116,8 @@
     
     <div id = "displaymessages"></div>
     <div id = "submitform">
-      <input type="text" id="fname" name="fname" size = 100vh>
-      <input type="submit" id="submitbutton" value="➤" onclick = Submit()>
+      <input type="text" id="inputbox" name="inputbox" placeholder="Enter your message...">
+      <input type="submit" id="submitbutton" value="&#10148;" onclick = Submit()>
     </div>
     <script src = "socket.js"></script>
     <script src = "messages.js"></script>

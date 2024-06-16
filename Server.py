@@ -3,6 +3,22 @@ import asyncio
 import json
 from datetime import datetime
 import os
+from cryptography.hazmat.primitives.serialization import load_pem_private_key
+from cryptography.hazmat.primitives.asymmetric import rsa, padding
+from cryptography.hazmat.primitives import serialization, hashes
+import base64
+
+# Load RSA keys
+with open("private_key.pem", "rb") as f:
+    private_key = serialization.load_pem_private_key(
+        f.read(),
+        password=None
+    )
+
+with open("public_key.pem", "rb") as f:
+    public_key = serialization.load_pem_public_key(
+        f.read()
+    )
 
 connected_clients = set()
 
@@ -10,7 +26,7 @@ async def initialize_json_file():
     """Initialize the JSON file if it does not exist or is empty."""
     if not os.path.exists("messages.json") or os.path.getsize("messages.json") == 0:
         with open("messages.json", 'w') as file:
-            json.dump([], file, indent=4)
+            json.dump([], file, indent=4) # Add square brackets to start and end of file to make it a proper json file
             
 async def load_messages():
     """Load messages from the JSON file into the in-memory list."""
@@ -31,21 +47,45 @@ async def connection_handler(websocket, path):
     """Handle incoming WebSocket connections."""
     connected_clients.add(websocket)
     
+    # Serialize the public key in DER format and encode it in base64
+    public_key_data = public_key.public_bytes(
+        encoding=serialization.Encoding.DER,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    )
+    await websocket.send(base64.b64encode(public_key_data).decode('utf-8'))
+    print("Sent public key to client")
+    
     try:
         # Send the last 5 messages to the newly connected client
         for message in messages[-5:]:
             message_json = json.dumps(message)
             await websocket.send(message_json)
+            print("Sent "+message_json)
 
         async for message in websocket:
             if message.strip(): # If message is not blank
+                print(f"Encrypted message received: {message}")
                 try:
+                    # Decode base64 and decrypt the message
+                    encrypted_message = base64.b64decode(message)
+                    decrypted_message = private_key.decrypt(
+                        encrypted_message,
+                        padding.OAEP(
+                            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                            algorithm=hashes.SHA256(),
+                            label=None
+                        )
+                    )
+                    
+                    # Decode decrypted message from bytes to string
+                    decrypted_message_str = decrypted_message.decode('utf-8')
+                    
                     # Split received JSON into username and text of message
-                    messagedata = json.loads(message)
+                    messagedata = json.loads(decrypted_message_str)
                     username = messagedata.get('username', 'User')
                     text = messagedata.get('message', '')
                     now = datetime.now()
-                    formatted_datetime = now.strftime("%Y-%m-%d %H:%M:%S")
+                    formatted_datetime = now.strftime("%d-%m-%y %H:%M:%S")
                     message_data = {
                         "author": username,
                         "message": text,
@@ -53,9 +93,8 @@ async def connection_handler(websocket, path):
                     }
                     message_json = json.dumps(message_data)
 
-
                     # Print the received message
-                    print(f"Received message: {message}")
+                    print(f"Received message: {decrypted_message_str}")
 
                     # Save the new message
                     await save_message(message_data)
