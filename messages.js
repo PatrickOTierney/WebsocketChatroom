@@ -1,33 +1,12 @@
 let socket = window.socket; // Global websocket variable
 let username = "User";
-let PublicKeyBuffer = window.PublicKeyBuffer;
+let clientPublicKeyB64 = window.clientPublicKeyB64;
+let serverPublicKeyB64 = window.serverPublicKeyB64;
+let PublicKeySent = window.PublicKeySent;
 
-async function encryptMessage(publicKey, message) {
-  console.log("KEY: "+publicKey)
-  // Convert the message to an ArrayBuffer
-  const enc = new TextEncoder();
-  const encodedMessage = enc.encode(message);
 
-  // Encrypt the message using the public key
-  const encryptedMessage = await window.crypto.subtle.encrypt(
-    {
-      name: "RSA-OAEP"
-    },
-    publicKey,
-    encodedMessage
-  );
 
-  return encryptedMessage;
-}
-
-function arrayBufferToBase64(buffer) {
-  const bytes = new Uint8Array(buffer);
-  let binary = '';
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return window.btoa(binary);
-}
+// ------------------ Actually sending messages -------------
 
 document.getElementById('inputbox').addEventListener('keydown', function(event) {
   if (event.key === 'Enter') {
@@ -46,13 +25,11 @@ async function Submit() {
     };
     console.log("Message:", data);
 
-    if (PublicKeyBuffer) {
-      const publicKey = await PublicKeyBuffer;
-
-      const encryptedMessage = await encryptMessage(publicKey, JSON.stringify(data));
-
-      const base64EncryptedMessage = arrayBufferToBase64(encryptedMessage);
-      console.log(base64EncryptedMessage);
+    if (PublicKeyB64) {
+      const serverPublicKey = await window.serverPublicKeyB64;
+      const encryptedMessage = await window.encryptMessage(await window.importPublicKey(serverPublicKey), JSON.stringify(data));
+      const base64EncryptedMessage = window.arrayBufferToBase64(encryptedMessage);
+      console.log("base64 encrypted message "+base64EncryptedMessage);
       socket.send(base64EncryptedMessage);
 
       document.getElementById('inputbox').value = "";

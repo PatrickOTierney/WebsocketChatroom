@@ -21,6 +21,7 @@ with open("public_key.pem", "rb") as f:
     )
 
 connected_clients = set()
+client_public_keys = {}
 
 async def initialize_json_file():
     """Initialize the JSON file if it does not exist or is empty."""
@@ -44,6 +45,8 @@ async def save_message(message_data):
         json.dump(messages, file, indent=4)
 
 async def connection_handler(websocket, path):
+    client_public_key_received = False
+    client_public_key = None
     """Handle incoming WebSocket connections."""
     connected_clients.add(websocket)
     
@@ -54,16 +57,27 @@ async def connection_handler(websocket, path):
     )
     await websocket.send(base64.b64encode(public_key_data).decode('utf-8'))
     print("Sent public key to client")
+
+    # Receive the client's public key
+    encrypted_client_public_key_message = await websocket.recv()
+    print(f"Encrypted client public key received: {encrypted_client_public_key_message}")
+
+    b64encrypted = base64.b64decode(encrypted_client_public_key_message)
+    client_public_keys[websocket] = client_public_key
+    print("Received and stored client's public key")
     
     try:
         # Send the last 5 messages to the newly connected client
-        for message in messages[-5:]:
-            message_json = json.dumps(message)
-            await websocket.send(message_json)
-            print("Sent "+message_json)
+        #for message in messages[-5:]:
+            #message_json = json.dumps(message)
+            #await websocket.send(message_json)
+            #print("Sent "+message_json)
+        
+        
 
         async for message in websocket:
             if message.strip(): # If message is not blank
+                
                 print(f"Encrypted message received: {message}")
                 try:
                     # Decode base64 and decrypt the message
@@ -76,34 +90,42 @@ async def connection_handler(websocket, path):
                             label=None
                         )
                     )
+
+                    print(decrypted_message)
+
+                    
                     
                     # Decode decrypted message from bytes to string
                     decrypted_message_str = decrypted_message.decode('utf-8')
-                    
-                    # Split received JSON into username and text of message
-                    messagedata = json.loads(decrypted_message_str)
-                    username = messagedata.get('username', 'User')
-                    text = messagedata.get('message', '')
-                    now = datetime.now()
-                    formatted_datetime = now.strftime("%d-%m-%y %H:%M:%S")
-                    message_data = {
-                        "author": username,
-                        "message": text,
-                        "timestamp": formatted_datetime
-                    }
-                    message_json = json.dumps(message_data)
+                    print("dec message string"+decrypted_message_str)
+                    if not client_public_key_received:
+                        client_public_key = decrypted_message_str
+                        print("client public key: "+client_public_key)
+                    else:
+                        # Split received JSON into username and text of message
+                        messagedata = json.loads(decrypted_message_str)
+                        username = messagedata.get('username', 'User')
+                        text = messagedata.get('message', '')
+                        now = datetime.now()
+                        formatted_datetime = now.strftime("%d-%m-%y %H:%M:%S")
+                        message_data = {
+                            "author": username,
+                            "message": text,
+                            "timestamp": formatted_datetime
+                        }
+                        message_json = json.dumps(message_data)
 
-                    # Print the received message
-                    print(f"Received message: {decrypted_message_str}")
+                        # Print the received message
+                        print(f"Received message: {decrypted_message_str}")
 
-                    # Save the new message
-                    await save_message(message_data)
+                        # Save the new message
+                        await save_message(message_data)
 
-                    # Send to other connected clients
-                    await broadcast(message_json)
+                        # Send to other connected clients
+                        await broadcast(message_json)
                 except json.JSONDecodeError as e:
                     print("Error decoding JSON:", e)
-    finally:
+    finally:    
         # Unregister client
         connected_clients.remove(websocket)
 

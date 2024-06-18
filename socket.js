@@ -1,14 +1,46 @@
 let PublicKeyReceived = false;
-var b64ServerPublicKey;
-window.PublicKeyBuffer = null;
+window.PublicKeyB64 = null;
+window.PublicKeySent = false;
+window.clientPublicKey = null;
+window.clientPrivateKey = null;
+window.serverPublicKeyB64 = null;
 
 const MessageType = {
     NORMAL: 'normal',
     ERROR: 'error',
   };
-let ErrorMessageJson; //{"author": "Client", "message": "Something went wrong, are you sure the server is up?", "timestamp": new Date().toLocaleString()}
+let ErrorMessageJson; 
+
 // -----------------Encryption Jargon ----------------
-async function importPublicKey(base64PublicKey) {
+window.encryptMessage = async function(publicKey, message) { // Note key first, then message, seems strange but also seems to be how it's done elsewhere
+  //console.log("KEY: "+publicKey)
+  // Convert the message to an ArrayBuffer
+  const enc = new TextEncoder();
+  const encodedMessage = enc.encode(message);
+
+  // Encrypt the message using the public key
+  const encryptedMessage = await window.crypto.subtle.encrypt(
+    {
+      name: "RSA-OAEP"
+    },
+    publicKey,
+    encodedMessage
+  );
+
+  return encryptedMessage;
+}
+
+window.arrayBufferToBase64 = function(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return window.btoa(binary);
+}
+
+
+window.importPublicKey = async function(base64PublicKey) {
   // Decode base64 public key to ArrayBuffer
   const binaryDerString = window.atob(base64PublicKey);
   const binaryDer = new Uint8Array(binaryDerString.length);
@@ -31,9 +63,50 @@ async function importPublicKey(base64PublicKey) {
   return publicKey;
 }
 
+async function generateKeyPair() {
+  const keyPair = await window.crypto.subtle.generateKey(
+      {
+          name: "RSA-OAEP",
+          modulusLength: 2048,
+          publicExponent: new Uint8Array([1, 0, 1]), // 65537
+          hash: { name: "SHA-256" }
+      },
+      true,
+      ["encrypt", "decrypt"]
+  );
+
+  window.clientPublicKey = await window.crypto.subtle.exportKey(
+      "spki",
+      keyPair.publicKey
+  );
+
+  window.clientPrivateKey = await window.crypto.subtle.exportKey(
+      "pkcs8",
+      keyPair.privateKey
+  );
+
+  console.log("Generated client public key:", arrayBufferToBase64(clientPublicKey));
+
+  // Now that keys are generated, establish WebSocket connection
+  //establishWebSocketConnection();
+}
+
+function arrayBufferToString(buffer) {
+  const decoder = new TextDecoder('utf-8');
+  
+  return decoder.decode(buffer);
+}
+
+
+
+
+
+
+// -------------------Socket jargon---------------------------
 try {
     // Attempt to create a WebSocket connection
     if (!window.socket) {
+      
         window.socket = new WebSocket('ws://localhost:8765');
     }
     
@@ -43,12 +116,32 @@ try {
     };
   
     // Event listener for WebSocket messages
-    socket.onmessage = function(event) {
+    socket.onmessage = async function(event) {
       if (!PublicKeyReceived) {
-        b64ServerPublicKey = event.data;
-        console.log("Received server public key = "+b64ServerPublicKey);
-        PublicKeyBuffer = importPublicKey(b64ServerPublicKey);
-        PublicKeyReceived = true;
+        // This might be the worst code ever written in the history of mankind, using a new variable rather than the already declared global variable for client public key in b64
+        await generateKeyPair();
+        window.serverPublicKeyB64 = event.data; // First message assumed to be plaintext public key of server
+        console.log("Received server public key = " + window.serverPublicKeyB64);
+    
+        // Convert to "Array Buffer" for use in cryptography
+        const PublicKeyCrypto = await window.importPublicKey(window.serverPublicKeyB64); 
+        
+        console.log("Public Key Crypto", PublicKeyCrypto); // Log the resolved value
+    
+        PublicKeyReceived = true; // Note receipt of public key to treat other messages differently
+
+        PublicKeyB64 = window.arrayBufferToBase64(window.clientPublicKey)
+    
+        // Sending client public key back to server encrypted using server public key
+        console.log("client public key " + PublicKeyB64); 
+        socket.send(PublicKeyB64);
+
+        
+        /*const encryptedMessage = await window.encryptMessage(PublicKeyBuffer, window.clientPublicKey);
+        console.log("encrypted client public key" +encryptedMessage); 
+        const base64EncryptedMessage = window.arrayBufferToBase64(encryptedMessage);
+        console.log("base64 encrypted message " + base64EncryptedMessage);
+        socket.send(base64EncryptedMessage);*/
       } else {
         json = JSON.parse(event.data);
         console.log('Message received:', json);
@@ -77,30 +170,18 @@ try {
 
   function createMessageDiv(message, status) {
     var messageDiv = document.createElement("div");
-    if (status == MessageType.ERROR) {
-      messageDiv.style.color = "rgb(0,0,0)";
-      messageDiv.style.backgroundImage = "linear-gradient(to left, rgba(200, 0, 0, 0.1), rgba(255, 0, 0, 0.3))";
-      messageDiv.style.borderColor = "rgb(255, 20, 40)";
+    messageDiv.classList.add("message");
+  
+    // Add specific message type class based on status
+    if (status === MessageType.ERROR) {
+      messageDiv.classList.add("error");
     } else {
-      messageDiv.style.backgroundColor = "rgb(164, 168, 209)";
-      messageDiv.style.backgroundImage = "linear-gradient(to left, rgba(122, 26, 255, 0.1 ), rgba(122, 26, 255, 0.3))";
-      messageDiv.style.borderColor = "rgb(221,231,199)";
-      messageDiv.style.borderColor = "rgb(122, 26, 255)";
+      messageDiv.classList.add("normal");
     }
   
     messageDiv.textContent = `${message.author} (${message.timestamp}): ${message.message}`;
   
-    messageDiv.style.borderWidth = "0px"; // Apply CSS styles to message div
-    messageDiv.style.borderRadius = "5px";
-    messageDiv.style.borderStyle = "solid";
-    messageDiv.style.paddingLeft = "15px";
-    messageDiv.style.paddingRight = "5px";
-    messageDiv.style.paddingTop = "3px";
-    messageDiv.style.paddingBottom = "3px";
-    messageDiv.style.margin = "0.5vh";
-    messageDiv.style.fontFamily = "Comic Sans MS, cursive"
-  
-    // Add created div to message container div
     var messagesContainer = document.getElementById("displaymessages");
     messagesContainer.appendChild(messageDiv);
   }
+  

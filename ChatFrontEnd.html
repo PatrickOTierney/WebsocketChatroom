@@ -107,6 +107,29 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #741bbc5a; 
         }
+        /* Base styles for all messages */
+.message {
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  padding: 3px 5px;
+  margin: 0.5vh;
+  font-family: "Comic Sans MS", cursive;
+}
+
+/* Styles for normal messages */
+.message.normal {
+  background-color: rgb(164, 168, 209);
+  background-image: linear-gradient(to left, rgba(122, 26, 255, 0.1), rgba(122, 26, 255, 0.3));
+  color: rgb(0, 0, 0);
+  border-color: rgb(221, 231, 199);
+}
+
+/* Styles for error messages */
+.message.error {
+  background-image: linear-gradient(to left, rgba(200, 0, 0, 0.1), rgba(255, 0, 0, 0.3));
+  color: rgb(0, 0, 0);
+  border-color: rgb(255, 20, 40);
+}
     </style>
     
 
