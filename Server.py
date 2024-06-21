@@ -45,7 +45,8 @@ async def save_message(message_data):
         json.dump(messages, file, indent=4)
 
 async def connection_handler(websocket, path):
-    client_public_key_received = False
+    
+    #   client_public_key_received = False
     client_public_key = None
     """Handle incoming WebSocket connections."""
     connected_clients.add(websocket)
@@ -59,10 +60,11 @@ async def connection_handler(websocket, path):
     print("Sent public key to client")
 
     # Receive the client's public key
-    encrypted_client_public_key_message = await websocket.recv()
-    print(f"Encrypted client public key received: {encrypted_client_public_key_message}")
+    client_public_key_message = await websocket.recv()
+    print(f"Client public key received: {client_public_key_message}")
 
-    b64encrypted = base64.b64decode(encrypted_client_public_key_message)
+    client_public_key_bin = base64.b64decode(client_public_key_message)
+    client_public_key = serialization.load_der_public_key(client_public_key_bin)
     client_public_keys[websocket] = client_public_key
     print("Received and stored client's public key")
     
@@ -98,41 +100,57 @@ async def connection_handler(websocket, path):
                     # Decode decrypted message from bytes to string
                     decrypted_message_str = decrypted_message.decode('utf-8')
                     print("dec message string"+decrypted_message_str)
-                    if not client_public_key_received:
-                        client_public_key = decrypted_message_str
-                        print("client public key: "+client_public_key)
-                    else:
+                    #if not client_public_key_received:
+                        #client_public_key = decrypted_message_str
+                        #print("client public key: "+client_public_key)
+                    #else:
                         # Split received JSON into username and text of message
-                        messagedata = json.loads(decrypted_message_str)
-                        username = messagedata.get('username', 'User')
-                        text = messagedata.get('message', '')
-                        now = datetime.now()
-                        formatted_datetime = now.strftime("%d-%m-%y %H:%M:%S")
-                        message_data = {
-                            "author": username,
-                            "message": text,
-                            "timestamp": formatted_datetime
-                        }
-                        message_json = json.dumps(message_data)
+                    messagedata = json.loads(decrypted_message_str)
+                    username = messagedata.get('username', 'User')
+                    text = messagedata.get('message', '')
+                    now = datetime.now()
+                    formatted_datetime = now.strftime("%d-%m-%y %H:%M:%S")
+                    message_data = {
+                        "author": username,
+                        "message": text,
+                        "timestamp": formatted_datetime
+                    }
+                    message_json = json.dumps(message_data)
 
-                        # Print the received message
-                        print(f"Received message: {decrypted_message_str}")
+                    # Print the received message
+                    print(f"Received message: {decrypted_message_str}")
 
-                        # Save the new message
-                        await save_message(message_data)
+                    # Save the new message
+                    await save_message(message_data)
 
-                        # Send to other connected clients
-                        await broadcast(message_json)
+                    # Send to other connected clients
+                    await broadcast(message_json)
                 except json.JSONDecodeError as e:
                     print("Error decoding JSON:", e)
     finally:    
-        # Unregister client
+        # Unregister client and remove keys from dictionary
         connected_clients.remove(websocket)
+        if websocket in client_public_keys:
+            del client_public_keys[websocket]
 
 async def broadcast(message):
     """Broadcast a message to all connected clients."""
     if connected_clients:  # Check if there are any connected clients
-        tasks = [asyncio.create_task(client.send(message)) for client in connected_clients]
+        tasks = []
+        for client in connected_clients:
+            client_public_key = client_public_keys.get(client)
+            if client_public_key:
+                encrypted_message = client_public_key.encrypt(
+                    message.encode('utf-8'),
+                    padding.OAEP(
+                        mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                        algorithm=hashes.SHA256(),
+                        label=None
+                    )
+                )
+                encrypted_message_b64 = base64.b64encode(encrypted_message).decode('utf-8')
+                tasks.append(asyncio.create_task(client.send(encrypted_message_b64)))
+                print("sent message to client(s): "+encrypted_message_b64)
         await asyncio.wait(tasks)
 
 async def start_server():

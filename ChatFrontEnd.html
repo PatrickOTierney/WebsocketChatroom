@@ -107,29 +107,40 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #741bbc5a; 
         }
-        /* Base styles for all messages */
-.message {
-  border-radius: 5px;
-  border: 1px solid #ccc;
-  padding: 3px 5px;
-  margin: 0.5vh;
-  font-family: "Comic Sans MS", cursive;
-}
+        
+        /* this is fancy as hell*/
+        input[disabled] {
+            cursor: not-allowed;
+        }
+        .message {
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            padding: 3px 5px;
+            margin: 0.5vh;
+            font-family: "Comic Sans MS", cursive;
+        }
 
-/* Styles for normal messages */
-.message.normal {
-  background-color: rgb(164, 168, 209);
-  background-image: linear-gradient(to left, rgba(122, 26, 255, 0.1), rgba(122, 26, 255, 0.3));
-  color: rgb(0, 0, 0);
-  border-color: rgb(221, 231, 199);
-}
+        /* Styles for normal messages */
+        .message.normal {
+            background-color: rgb(164, 168, 209);
+            background-image: linear-gradient(to left, rgba(122, 26, 255, 0.1), rgba(122, 26, 255, 0.3));
+            color: rgb(0, 0, 0);
+            border-color: rgb(221, 231, 199);
+            }
 
-/* Styles for error messages */
-.message.error {
-  background-image: linear-gradient(to left, rgba(200, 0, 0, 0.1), rgba(255, 0, 0, 0.3));
-  color: rgb(0, 0, 0);
-  border-color: rgb(255, 20, 40);
-}
+            /* Styles for error messages */
+        .message.error {
+            background-image: linear-gradient(to left, rgba(200, 0, 0, 0.1), rgba(255, 0, 0, 0.3));
+            color: rgb(0, 0, 0);
+            border-color: rgb(255, 20, 40);
+        }
+
+        .message.success {
+            background-color: rgb(164, 168, 209);
+            background-image: linear-gradient(to left, rgba(3, 237, 11, 0.403), rgba(26, 255, 0, 0.517));
+            color: rgb(0, 0, 0);
+            border-color: rgb(221, 231, 199);
+        }
     </style>
     
 
@@ -139,7 +150,7 @@
     
     <div id = "displaymessages"></div>
     <div id = "submitform">
-      <input type="text" id="inputbox" name="inputbox" placeholder="Enter your message...">
+      <input type="text" id="inputbox" name="inputbox" placeholder="Enter your message..." disabled>
       <input type="submit" id="submitbutton" value="&#10148;" onclick = Submit()>
     </div>
     <script src = "socket.js"></script>

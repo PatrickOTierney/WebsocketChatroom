@@ -4,10 +4,7 @@ let clientPublicKeyB64 = window.clientPublicKeyB64;
 let serverPublicKeyB64 = window.serverPublicKeyB64;
 let PublicKeySent = window.PublicKeySent;
 
-
-
 // ------------------ Actually sending messages -------------
-
 document.getElementById('inputbox').addEventListener('keydown', function(event) {
   if (event.key === 'Enter') {
     event.preventDefault(); // Prevent the default action (form submission)
@@ -25,8 +22,9 @@ async function Submit() {
     };
     console.log("Message:", data);
 
+    
     if (PublicKeyB64) {
-      const serverPublicKey = await window.serverPublicKeyB64;
+      const serverPublicKey = await window.serverPublicKeyB64; 
       const encryptedMessage = await window.encryptMessage(await window.importPublicKey(serverPublicKey), JSON.stringify(data));
       const base64EncryptedMessage = window.arrayBufferToBase64(encryptedMessage);
       console.log("base64 encrypted message "+base64EncryptedMessage);
