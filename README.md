@@ -22,4 +22,4 @@ On connection, both server and client send their public keys to one another, and
   2. Still plenty of debug statements in the client and server console
   3. Unhelpful error messages appearing to client
   4. UI front end not allowing for anything other than connection to predisposed IP
-  5. 
+  
